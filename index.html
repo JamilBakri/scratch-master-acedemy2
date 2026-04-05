@@ -1,41 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>Scratch Master Academy</title>
 
-<!-- PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-body {
+body{
   margin:0;
-  font-family: Arial;
-  background: linear-gradient(to right, #007BFF, #00c6ff);
+  font-family:Arial;
+  background:linear-gradient(to right,#007BFF,#00c6ff);
   color:white;
 }
-
-header {
+header{
+  background:white;
+  color:#007BFF;
   padding:20px;
   text-align:center;
   font-size:30px;
-  font-weight:bold;
-  background:white;
-  color:#007BFF;
 }
-
-.container { padding:20px; }
-
-.card {
+.container{padding:20px;}
+.card{
   background:white;
   color:black;
   padding:15px;
-  border-radius:15px;
   margin:15px 0;
-  box-shadow:0 5px 15px rgba(0,0,0,0.2);
+  border-radius:15px;
 }
 
-button {
+/* ANIMATION */
+canvas{
+  background:white;
+  border-radius:10px;
+  margin-top:10px;
+  animation:fadeIn 1s ease;
+}
+@keyframes fadeIn{
+  from{opacity:0; transform:scale(0.9);}
+  to{opacity:1; transform:scale(1);}
+}
+
+button{
   padding:10px;
   border:none;
   border-radius:10px;
@@ -43,29 +49,24 @@ button {
   color:white;
   cursor:pointer;
 }
-
-input {
+input{
   padding:10px;
   margin:5px;
   width:90%;
 }
+iframe{width:100%; height:200px;}
 
-iframe {
-  width:100%;
-  height:200px;
-  border-radius:10px;
-}
-
-/* MODAL */
-.modal {
+/* CONTACT */
+.modal{
   display:none;
   position:fixed;
+  top:0;
+  left:0;
   width:100%;
   height:100%;
   background:rgba(0,0,0,0.6);
 }
-
-.modal-content {
+.modal-content{
   background:white;
   color:black;
   margin:10% auto;
@@ -73,6 +74,11 @@ iframe {
   width:300px;
   border-radius:20px;
   text-align:center;
+}
+.close{
+  float:right;
+  cursor:pointer;
+  font-size:20px;
 }
 </style>
 </head>
@@ -94,14 +100,14 @@ iframe {
 <div class="card">
 <h2>🧠 Quiz</h2>
 <p id="question"></p>
-<input id="answer" placeholder="Your answer">
+<input id="answer">
 <button onclick="checkAnswer()">Submit</button>
 <p id="score">Score: 0</p>
 </div>
 
 <!-- PROJECTS -->
 <div class="card">
-<h2>🎮 Add Project</h2>
+<h2>🎮 Projects</h2>
 <input id="projectName" placeholder="Project name">
 <button onclick="addProject()">Add</button>
 <ul id="projects"></ul>
@@ -109,17 +115,13 @@ iframe {
 
 <!-- CERTIFICATE -->
 <div class="card">
-<h2>📜 Certificate</h2>
+<h2>📜 Animated Certificate</h2>
 <input id="certName" placeholder="Your name">
 <button onclick="generateCert()">Generate</button>
-<button onclick="downloadCert()">PNG</button>
+<button onclick="downloadPNG()">PNG</button>
 <button onclick="downloadPDF()">PDF</button>
-<button onclick="saveCert()">Save</button>
 
-<br><br>
-<canvas id="canvas" width="500" height="300" style="background:white;border-radius:10px;"></canvas>
-
-<ul id="certList"></ul>
+<canvas id="canvas" width="600" height="350"></canvas>
 </div>
 
 <!-- CONTACT -->
@@ -128,21 +130,25 @@ iframe {
 <button onclick="openContact()">Open Contact</button>
 </div>
 
+<!-- MODAL -->
 <div id="contactModal" class="modal">
-  <div class="modal-content">
-    <h2>Contact Me</h2>
-    <p>Jamil Bakri</p>
-    <p>+35794020504</p>
+<div class="modal-content">
+<span class="close" onclick="closeContact()">✖</span>
 
-    <a href="https://wa.me/35794020504" target="_blank">
-      <button style="background:#25D366;">WhatsApp</button>
-    </a>
+<h2>Contact</h2>
+<p><b>Jamil Bakri</b></p>
+<p>Age: 10</p>
+<p>📞 +35794020504</p>
 
-    <h3>Email</h3>
-    <input id="emailName" placeholder="Your Name">
-    <input id="emailMsg" placeholder="Your Message">
-    <button onclick="sendEmail()">Send</button>
-  </div>
+<a href="https://wa.me/35794020504" target="_blank">
+<button style="background:#25D366;">WhatsApp</button>
+</a>
+
+<h3>Email</h3>
+<input id="emailMsg" placeholder="Message">
+<button onclick="sendEmail()">Send Email</button>
+
+</div>
 </div>
 
 </div>
@@ -150,144 +156,121 @@ iframe {
 <script>
 
 // QUIZ
-let questions=[
-{q:"What starts program?",a:"green"},
-{q:"Scratch is?",a:"programming"},
-{q:"Loop block?",a:"loop"},
-{q:"Move block?",a:"motion"},
-{q:"Sprite?",a:"character"},
-{q:"Sound tab?",a:"sound"},
-{q:"Code tab?",a:"code"},
-{q:"Wait block?",a:"wait"},
-{q:"Backdrop?",a:"background"},
-{q:"Who made Scratch?",a:"mit"}
+let q=[
+{q:"What block starts a program?",a:"green"},
+{q:"What is Scratch?",a:"programming"},
+{q:"Which block repeats?",a:"loop"}
 ];
 
-let current=0,score=0;
-
-function loadQuestion(){
-  document.getElementById("question").innerText=questions[current].q;
-}
-loadQuestion();
+let i=0,s=0;
+function loadQ(){document.getElementById("question").innerText=q[i].q;}
+loadQ();
 
 function checkAnswer(){
-  let ans=document.getElementById("answer").value.toLowerCase();
-  if(ans.includes(questions[current].a)) score+=10;
-  current++;
-  if(current<questions.length) loadQuestion();
-  else alert("Finished!");
-  document.getElementById("score").innerText="Score: "+score;
-  document.getElementById("answer").value="";
+let ans=document.getElementById("answer").value.toLowerCase();
+if(ans.includes(q[i].a)) s+=10;
+i++;
+if(i<q.length) loadQ();
+document.getElementById("score").innerText="Score: "+s;
 }
 
 // PROJECTS
 function addProject(){
-  let name=document.getElementById("projectName").value;
-  let li=document.createElement("li");
-  li.innerText=name;
-  document.getElementById("projects").appendChild(li);
-  localStorage.setItem("projects",projects.innerHTML);
+let name=document.getElementById("projectName").value;
+if(!name) return;
+let li=document.createElement("li");
+li.innerText=name;
+document.getElementById("projects").appendChild(li);
+document.getElementById("projectName").value="";
 }
 
-// CERTIFICATE
+// 🎓 ANIMATED CERTIFICATE
 function generateCert(){
-  let name=document.getElementById("certName").value;
-  let c=document.getElementById("canvas");
-  let ctx=c.getContext("2d");
+let name=document.getElementById("certName").value || "Your Name";
+let canvas=document.getElementById("canvas");
+let ctx=canvas.getContext("2d");
 
-  ctx.clearRect(0,0,500,300);
+let opacity=0;
 
-  ctx.fillStyle="#fff";
-  ctx.fillRect(0,0,500,300);
+let anim=setInterval(()=>{
+ctx.clearRect(0,0,600,350);
 
-  ctx.strokeStyle="gold";
-  ctx.lineWidth=8;
-  ctx.strokeRect(10,10,480,280);
+// BACKGROUND
+ctx.fillStyle="rgba(255,255,255,"+opacity+")";
+ctx.fillRect(0,0,600,350);
 
-  ctx.strokeStyle="#000";
-  ctx.lineWidth=2;
-  ctx.strokeRect(20,20,460,260);
+// BORDER
+ctx.strokeStyle="gold";
+ctx.lineWidth=8;
+ctx.strokeRect(10,10,580,330);
 
-  ctx.textAlign="center";
+// TEXT
+ctx.globalAlpha=opacity;
+ctx.textAlign="center";
 
-  ctx.font="bold 26px Georgia";
-  ctx.fillText("Certificate of Achievement",250,60);
+ctx.font="bold 30px Georgia";
+ctx.fillStyle="black";
+ctx.fillText("Certificate of Achievement",300,80);
 
-  ctx.font="16px Arial";
-  ctx.fillText("Awarded to",250,100);
+ctx.font="18px Arial";
+ctx.fillText("Awarded to",300,130);
 
-  ctx.font="bold 24px Georgia";
-  ctx.fillStyle="#007BFF";
-  ctx.fillText(name,250,140);
+ctx.fillStyle="#007BFF";
+ctx.font="bold 28px Georgia";
+ctx.fillText(name,300,180);
 
-  ctx.fillStyle="#000";
-  ctx.font="16px Arial";
-  ctx.fillText("Scratch Master Course",250,170);
+ctx.fillStyle="black";
+ctx.font="18px Arial";
+ctx.fillText("Scratch Master Course",300,220);
 
-  let date=new Date().toLocaleDateString();
-  ctx.fillText("Date: "+date,100,240);
+// GOLD SEAL GLOW
+ctx.beginPath();
+ctx.arc(500,100,35,0,Math.PI*2);
+ctx.fillStyle="gold";
+ctx.shadowBlur=20;
+ctx.shadowColor="gold";
+ctx.fill();
+ctx.shadowBlur=0;
 
-  ctx.fillText("Signature:",320,240);
-  ctx.beginPath();
-  ctx.moveTo(400,245);
-  ctx.lineTo(470,245);
-  ctx.stroke();
+opacity+=0.05;
+if(opacity>=1) clearInterval(anim);
 
-  ctx.fillText("Jamil Bakri",250,270);
-
-  // logo
-  let img=new Image();
-  img.onload=()=>ctx.drawImage(img,30,30,60,60);
-  img.src="https://upload.wikimedia.org/wikipedia/commons/7/75/Scratch.logo.S.png";
-
-  // seal
-  ctx.beginPath();
-  ctx.arc(430,90,30,0,Math.PI*2);
-  ctx.fillStyle="gold";
-  ctx.fill();
-  ctx.fillStyle="#000";
-  ctx.font="bold 12px Arial";
-  ctx.fillText("OFFICIAL",430,95);
+},30);
 }
 
-function downloadCert(){
-  let link=document.createElement("a");
-  link.download="certificate.png";
-  link.href=canvas.toDataURL();
-  link.click();
+// DOWNLOAD
+function downloadPNG(){
+let link=document.createElement("a");
+link.download="certificate.png";
+link.href=document.getElementById("canvas").toDataURL();
+link.click();
 }
 
 function downloadPDF(){
-  const {jsPDF}=window.jspdf;
-  let pdf=new jsPDF({orientation:"landscape"});
-  pdf.addImage(canvas.toDataURL(),"PNG",10,10,270,150);
-  pdf.save("certificate.pdf");
+const {jsPDF}=window.jspdf;
+let pdf=new jsPDF({orientation:"landscape"});
+pdf.addImage(document.getElementById("canvas").toDataURL(),"PNG",10,10,280,160);
+pdf.save("certificate.pdf");
 }
 
-function saveCert(){
-  let name=document.getElementById("certName").value;
-  let date=new Date().toLocaleDateString();
-  let li=document.createElement("li");
-  li.innerText=name+" - "+date;
-  document.getElementById("certList").appendChild(li);
-  localStorage.setItem("certs",certList.innerHTML);
-}
-
-// CONTACT
+// 📞 CONTACT FIXED
 function openContact(){
-  document.getElementById("contactModal").style.display="block";
+document.getElementById("contactModal").style.display="block";
+}
+function closeContact(){
+document.getElementById("contactModal").style.display="none";
+}
+window.onclick=function(e){
+let modal=document.getElementById("contactModal");
+if(e.target===modal){
+modal.style.display="none";
+}
 }
 
+// EMAIL
 function sendEmail(){
-  let name=document.getElementById("emailName").value;
-  let msg=document.getElementById("emailMsg").value;
-  window.location.href=`mailto:jamilbakri.2015@gmail.com?subject=${name}&body=${msg}`;
-}
-
-// LOAD
-window.onload=function(){
-  projects.innerHTML=localStorage.getItem("projects")||"";
-  certList.innerHTML=localStorage.getItem("certs")||"";
+let msg=document.getElementById("emailMsg").value;
+window.location.href="mailto:jamilbakri.2015@gmail.com?subject=Contact&body="+msg;
 }
 
 </script>
