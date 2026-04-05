@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <title>Scratch Master Academy</title>
 
+<!-- PDF LIBRARY -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
 body {
   margin:0;
@@ -21,9 +24,7 @@ header {
   color:#007BFF;
 }
 
-.container {
-  padding:20px;
-}
+.container { padding:20px; }
 
 .card {
   background:white;
@@ -35,7 +36,7 @@ header {
 }
 
 button {
-  padding:10px 15px;
+  padding:10px;
   border:none;
   border-radius:10px;
   background:#007BFF;
@@ -59,9 +60,6 @@ iframe {
 .modal {
   display:none;
   position:fixed;
-  z-index:999;
-  left:0;
-  top:0;
   width:100%;
   height:100%;
   background:rgba(0,0,0,0.6);
@@ -72,8 +70,8 @@ iframe {
   color:black;
   margin:10% auto;
   padding:20px;
-  border-radius:20px;
   width:300px;
+  border-radius:20px;
   text-align:center;
   animation:pop 0.3s ease;
 }
@@ -136,10 +134,14 @@ iframe {
 <h2>📜 Certificate</h2>
 <input id="certName" placeholder="Your name">
 <button onclick="generateCert()">Generate</button>
+<button onclick="downloadCert()">Download PNG</button>
+<button onclick="downloadPDF()">Download PDF</button>
+<button onclick="saveCert()">Save Certificate</button>
+
 <br><br>
 <canvas id="canvas" width="500" height="300" style="background:white;border-radius:10px;"></canvas>
-<br>
-<button onclick="downloadCert()">Download</button>
+
+<ul id="certList"></ul>
 </div>
 
 <!-- CONTACT -->
@@ -158,20 +160,14 @@ iframe {
     <p><b>🎂 Age:</b> 10</p>
     <p><b>📱 Phone:</b> +35794020504</p>
 
-    <br>
-
     <a href="https://wa.me/35794020504" target="_blank">
       <button style="background:#25D366;">📱 WhatsApp</button>
     </a>
 
-    <br><br>
-
-    <h3>📧 Send Email</h3>
+    <h3>📧 Email</h3>
     <input id="emailName" placeholder="Your Name">
     <input id="emailMsg" placeholder="Your Message">
-    <br>
     <button onclick="sendEmail()">Send</button>
-
   </div>
 </div>
 
@@ -181,20 +177,19 @@ iframe {
 
 // QUIZ
 let questions = [
-  {q:"What block starts a program?", a:"green flag"},
+  {q:"What starts a program?", a:"green flag"},
   {q:"What is Scratch?", a:"programming"},
-  {q:"What block repeats?", a:"loop"},
-  {q:"What block moves?", a:"motion"},
-  {q:"What is sprite?", a:"character"},
-  {q:"What tab has sounds?", a:"sound"},
-  {q:"What tab has code?", a:"code"},
-  {q:"What block waits?", a:"wait"},
-  {q:"What is backdrop?", a:"background"},
+  {q:"Repeat block?", a:"loop"},
+  {q:"Move block?", a:"motion"},
+  {q:"Sprite?", a:"character"},
+  {q:"Sound tab?", a:"sound"},
+  {q:"Code tab?", a:"code"},
+  {q:"Wait block?", a:"wait"},
+  {q:"Backdrop?", a:"background"},
   {q:"Who made Scratch?", a:"mit"}
 ];
 
-let current = 0;
-let score = 0;
+let current = 0, score = 0;
 
 function loadQuestion(){
   document.getElementById("question").innerText = questions[current].q;
@@ -203,16 +198,11 @@ loadQuestion();
 
 function checkAnswer(){
   let ans = document.getElementById("answer").value.toLowerCase();
-  if(ans.includes(questions[current].a)){
-    score += 10;
-  }
+  if(ans.includes(questions[current].a)) score+=10;
   current++;
-  if(current < questions.length){
-    loadQuestion();
-  } else {
-    alert("Quiz finished!");
-  }
-  document.getElementById("score").innerText = "Score: " + score;
+  if(current < questions.length) loadQuestion();
+  else alert("Quiz finished!");
+  document.getElementById("score").innerText = "Score: "+score;
   document.getElementById("answer").value="";
 }
 
@@ -225,57 +215,110 @@ function addProject(){
   localStorage.setItem("projects", document.getElementById("projects").innerHTML);
 }
 
-window.onload = function(){
-  document.getElementById("projects").innerHTML = localStorage.getItem("projects") || "";
-}
-
-// CERTIFICATE
+// CERTIFICATE (PRO)
 function generateCert(){
   let name = document.getElementById("certName").value;
   let c = document.getElementById("canvas");
   let ctx = c.getContext("2d");
 
-  ctx.fillStyle = "white";
-  ctx.fillRect(0,0,500,300);
+  ctx.fillStyle="#fff"; ctx.fillRect(0,0,500,300);
 
-  ctx.fillStyle = "black";
-  ctx.font = "20px Arial";
-  ctx.fillText("Certificate of Achievement", 120, 50);
+  ctx.strokeStyle="gold"; ctx.lineWidth=8;
+  ctx.strokeRect(10,10,480,280);
 
-  ctx.font = "18px Arial";
-  ctx.fillText(name + " has been awarded", 120, 120);
+  ctx.strokeStyle="#333"; ctx.lineWidth=2;
+  ctx.strokeRect(20,20,460,260);
 
-  ctx.fillText("Scratch Master Certificate", 120, 160);
+  ctx.textAlign="center";
 
-  ctx.fillText("By Jamil Bakri", 170, 220);
+  ctx.font="bold 26px Georgia";
+  ctx.fillText("Certificate of Achievement",250,60);
+
+  ctx.font="16px Arial";
+  ctx.fillText("This is proudly awarded to",250,100);
+
+  ctx.font="bold 24px Georgia";
+  ctx.fillStyle="#007BFF";
+  ctx.fillText(name,250,140);
+
+  ctx.fillStyle="#000";
+  ctx.font="16px Arial";
+  ctx.fillText("For completing Scratch Master Course",250,170);
+
+  let date=new Date().toLocaleDateString();
+  ctx.fillText("Date: "+date,100,240);
+
+  ctx.fillText("Signature:",320,240);
+  ctx.beginPath();
+  ctx.moveTo(400,245);
+  ctx.lineTo(470,245);
+  ctx.stroke();
+
+  ctx.fillText("Jamil Bakri - Instructor",250,270);
+
+  // Logo
+  let img=new Image();
+  img.src="https://upload.wikimedia.org/wikipedia/commons/7/75/Scratch.logo.S.png";
+  img.onload=()=>ctx.drawImage(img,30,30,60,60);
+
+  // Seal
+  ctx.beginPath();
+  ctx.arc(430,90,30,0,Math.PI*2);
+  ctx.fillStyle="gold";
+  ctx.fill();
+  ctx.fillStyle="#000";
+  ctx.font="bold 12px Arial";
+  ctx.fillText("OFFICIAL",430,95);
 }
 
+// DOWNLOAD PNG
 function downloadCert(){
-  let link = document.createElement("a");
-  link.download = "certificate.png";
-  link.href = document.getElementById("canvas").toDataURL();
+  let link=document.createElement("a");
+  link.download="certificate.png";
+  link.href=document.getElementById("canvas").toDataURL();
   link.click();
 }
 
-// CONTACT MODAL
-function openContact(){
-  document.getElementById("contactModal").style.display = "block";
+// PDF
+function downloadPDF(){
+  const {jsPDF}=window.jspdf;
+  let canvas=document.getElementById("canvas");
+  let img=canvas.toDataURL("image/png");
+
+  let pdf=new jsPDF({orientation:"landscape"});
+  pdf.addImage(img,'PNG',10,10,270,150);
+  pdf.save("certificate.pdf");
 }
 
+// SAVE CERT
+function saveCert(){
+  let name=document.getElementById("certName").value;
+  let date=new Date().toLocaleDateString();
+  let li=document.createElement("li");
+  li.innerText=name+" - "+date;
+  document.getElementById("certList").appendChild(li);
+  localStorage.setItem("certs", document.getElementById("certList").innerHTML);
+}
+
+// CONTACT
+function openContact(){
+  document.getElementById("contactModal").style.display="block";
+}
 function closeContact(){
-  document.getElementById("contactModal").style.display = "none";
+  document.getElementById("contactModal").style.display="none";
 }
 
 // EMAIL
 function sendEmail(){
-  let name = document.getElementById("emailName").value;
-  let msg = document.getElementById("emailMsg").value;
+  let name=document.getElementById("emailName").value;
+  let msg=document.getElementById("emailMsg").value;
+  window.location.href=`mailto:jamilbakri.2015@gmail.com?subject=Message from ${name}&body=${msg}`;
+}
 
-  let mail = "mailto:jamilbakri.2015@gmail.com"
-           + "?subject=Message from " + name
-           + "&body=" + msg;
-
-  window.location.href = mail;
+// LOAD DATA
+window.onload=function(){
+  document.getElementById("projects").innerHTML=localStorage.getItem("projects")||"";
+  document.getElementById("certList").innerHTML=localStorage.getItem("certs")||"";
 }
 
 </script>
