@@ -92,17 +92,22 @@ iframe{width:100%; height:200px;}
 <!-- TUTORIALS -->
 <div class="card">
 <h2>📚 Tutorials</h2>
-<iframe src="https://www.youtube.com/embed/jXUZaf5D12A"></iframe>
-<iframe src="https://www.youtube.com/embed/VIpmkeqJhm4"></iframe>
+<iframe src="https://www.youtube.com/embed/jXUZaf5D12A" allowfullscreen></iframe>
+<iframe src="https://www.youtube.com/embed/1b7GqHkQ8Jk" allowfullscreen></iframe>
 </div>
 
-<!-- QUIZ -->
+<!-- COURSE SYSTEM -->
 <div class="card">
-<h2>🧠 Quiz</h2>
+<h2>🎓 Course System</h2>
+
+<p>Level: <span id="level">Beginner</span></p>
+<p>XP: <span id="xp">0</span></p>
+
 <p id="question"></p>
 <input id="answer">
 <button onclick="checkAnswer()">Submit</button>
-<p id="score">Score: 0</p>
+
+<p id="status"></p>
 </div>
 
 <!-- PROJECTS -->
@@ -115,13 +120,18 @@ iframe{width:100%; height:200px;}
 
 <!-- CERTIFICATE -->
 <div class="card">
-<h2>📜 Animated Certificate</h2>
+<h2>📜 Certificate</h2>
+
+<div id="lockedMsg">🔒 Finish course to unlock</div>
+
+<div id="certArea" style="display:none;">
 <input id="certName" placeholder="Your name">
 <button onclick="generateCert()">Generate</button>
 <button onclick="downloadPNG()">PNG</button>
 <button onclick="downloadPDF()">PDF</button>
 
 <canvas id="canvas" width="600" height="350"></canvas>
+</div>
 </div>
 
 <!-- CONTACT -->
@@ -155,23 +165,80 @@ iframe{width:100%; height:200px;}
 
 <script>
 
-// QUIZ
-let q=[
+// COURSE SYSTEM
+let levels = [
+{
+name:"Beginner",
+questions:[
 {q:"What block starts a program?",a:"green"},
-{q:"What is Scratch?",a:"programming"},
-{q:"Which block repeats?",a:"loop"}
+{q:"Scratch is?",a:"programming"}
+],
+pass:20
+},
+{
+name:"Intermediate",
+questions:[
+{q:"Loop block?",a:"loop"},
+{q:"Repeat means?",a:"again"}
+],
+pass:40
+},
+{
+name:"Pro",
+questions:[
+{q:"Variable stores?",a:"data"},
+{q:"Event block does?",a:"start"}
+],
+pass:60
+}
 ];
 
-let i=0,s=0;
-function loadQ(){document.getElementById("question").innerText=q[i].q;}
-loadQ();
+let currentLevel = parseInt(localStorage.getItem("level")) || 0;
+let xp = parseInt(localStorage.getItem("xp")) || 0;
+let i = 0;
+
+function updateUI(){
+if(currentLevel < levels.length){
+document.getElementById("level").innerText = levels[currentLevel].name;
+document.getElementById("xp").innerText = xp;
+document.getElementById("question").innerText = levels[currentLevel].questions[i].q;
+}
+}
+updateUI();
 
 function checkAnswer(){
-let ans=document.getElementById("answer").value.toLowerCase();
-if(ans.includes(q[i].a)) s+=10;
+let ans = document.getElementById("answer").value.toLowerCase();
+
+if(ans.includes(levels[currentLevel].questions[i].a)){
+xp += 10;
+document.getElementById("status").innerText="✅ Correct!";
+}else{
+document.getElementById("status").innerText="❌ Wrong!";
+}
+
 i++;
-if(i<q.length) loadQ();
-document.getElementById("score").innerText="Score: "+s;
+
+if(i >= levels[currentLevel].questions.length){
+if(xp >= levels[currentLevel].pass){
+currentLevel++;
+i=0;
+
+if(currentLevel >= levels.length){
+document.getElementById("status").innerText="🎉 Course Completed!";
+}else{
+document.getElementById("status").innerText="🚀 Level Up!";
+}
+}else{
+document.getElementById("status").innerText="❌ Not enough XP, try again";
+i=0;
+}
+}
+
+localStorage.setItem("xp", xp);
+localStorage.setItem("level", currentLevel);
+
+updateUI();
+checkUnlock();
 }
 
 // PROJECTS
@@ -184,6 +251,15 @@ document.getElementById("projects").appendChild(li);
 document.getElementById("projectName").value="";
 }
 
+// CERTIFICATE UNLOCK
+function checkUnlock(){
+if(currentLevel >= levels.length){
+document.getElementById("lockedMsg").style.display="none";
+document.getElementById("certArea").style.display="block";
+}
+}
+checkUnlock();
+
 // 🎓 ANIMATED CERTIFICATE
 function generateCert(){
 let name=document.getElementById("certName").value || "Your Name";
@@ -195,16 +271,13 @@ let opacity=0;
 let anim=setInterval(()=>{
 ctx.clearRect(0,0,600,350);
 
-// BACKGROUND
 ctx.fillStyle="rgba(255,255,255,"+opacity+")";
 ctx.fillRect(0,0,600,350);
 
-// BORDER
 ctx.strokeStyle="gold";
 ctx.lineWidth=8;
 ctx.strokeRect(10,10,580,330);
 
-// TEXT
 ctx.globalAlpha=opacity;
 ctx.textAlign="center";
 
@@ -223,7 +296,6 @@ ctx.fillStyle="black";
 ctx.font="18px Arial";
 ctx.fillText("Scratch Master Course",300,220);
 
-// GOLD SEAL GLOW
 ctx.beginPath();
 ctx.arc(500,100,35,0,Math.PI*2);
 ctx.fillStyle="gold";
@@ -253,7 +325,7 @@ pdf.addImage(document.getElementById("canvas").toDataURL(),"PNG",10,10,280,160);
 pdf.save("certificate.pdf");
 }
 
-// 📞 CONTACT FIXED
+// CONTACT
 function openContact(){
 document.getElementById("contactModal").style.display="block";
 }
